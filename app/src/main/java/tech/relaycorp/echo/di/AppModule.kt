@@ -9,6 +9,7 @@ import com.tfcporciuncula.flow.FlowSharedPreferences
 import dagger.Module
 import dagger.Provides
 import tech.relaycorp.echo.App
+import tech.relaycorp.poweb.PoWebClient
 import javax.inject.Singleton
 
 @Module

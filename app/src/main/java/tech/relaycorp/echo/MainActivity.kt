@@ -13,7 +13,7 @@ import javax.inject.Inject
 class MainActivity : AppCompatActivity() {
 
     @Inject
-    lateinit var registerEndpoint: RegisterEndpoint
+    lateinit var gatewayConnection: GatewayConnection
 
     @Inject
     lateinit var messageRepository: MessageRepository
@@ -29,18 +29,23 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         lifecycleScope.launch {
-            registerEndpoint.registerIfNeeded()
+            send.isEnabled = false
+            gatewayConnection.connect()
+            send.isEnabled = true
+        }
+
+        send.setOnClickListener {
+            lifecycleScope.launch {
+                send.isEnabled = false
+                sendMessage.send(messageField.text.toString())
+                messageField.setText("")
+                send.isEnabled = true
+            }
         }
 
         clear.setOnClickListener {
             lifecycleScope.launch {
                 messageRepository.clear()
-            }
-        }
-
-        send.setOnClickListener {
-            lifecycleScope.launch {
-                sendMessage.send(messageField.text.toString())
             }
         }
 
@@ -52,5 +57,10 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             .launchIn(lifecycleScope)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        gatewayConnection.disconnect()
     }
 }
