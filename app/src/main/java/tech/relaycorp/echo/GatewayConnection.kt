@@ -26,6 +26,8 @@ class GatewayConnection
 
     suspend fun connect() {
         withContext(Dispatchers.IO) {
+            if (syncConnection != null) return@withContext // Already connected
+
             if (config.endpointCertificate == null) {
                 register()
             } else {
@@ -86,6 +88,7 @@ class GatewayConnection
 
     private fun unbindSync() {
         syncConnection?.let { context.unbindService(it) }
+        syncConnection = null
     }
 
 

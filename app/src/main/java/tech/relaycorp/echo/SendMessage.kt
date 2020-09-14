@@ -22,7 +22,7 @@ class SendMessage
         withContext(Dispatchers.IO) {
             val parcel = Parcel(
                 recipientAddress = Relaynet.RECIPIENT,
-                payload = message.toByteArray(Charset.defaultCharset()),
+                payload = message.toByteArray(Charset.forName("UTF-8")),
                 senderCertificate = endpointConfig.endpointCertificate!!,
                 messageId = UUID.randomUUID().toString(),
                 creationDate = ZonedDateTime.now(),
