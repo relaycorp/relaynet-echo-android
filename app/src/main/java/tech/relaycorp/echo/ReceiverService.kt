@@ -9,7 +9,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import tech.relaycorp.poweb.PoWebClient
-import tech.relaycorp.relaynet.bindings.pdc.NonceSigner
+import tech.relaycorp.relaynet.bindings.pdc.Signer
 import tech.relaycorp.relaynet.bindings.pdc.StreamingMode
 import tech.relaycorp.relaynet.messages.Parcel
 import javax.inject.Inject
@@ -35,7 +35,7 @@ class NotificationBroadcastReceiver : BroadcastReceiver() {
             gatewayConnection.connect()
 
             val poweb = PoWebClient.initLocal(Relaynet.POWEB_PORT)
-            val nonceSigner = NonceSigner(
+            val nonceSigner = Signer(
                 endpointConfig.endpointCertificate!!, endpointConfig.endpointPrivateKey!!
             )
 

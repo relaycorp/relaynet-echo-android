@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import tech.relaycorp.poweb.PoWebClient
+import tech.relaycorp.relaynet.bindings.pdc.Signer
 import tech.relaycorp.relaynet.messages.Parcel
 import java.nio.charset.Charset
 import java.time.ZonedDateTime
@@ -30,8 +31,10 @@ class SendMessage
                 senderCertificateChain = setOf(endpointConfig.gatewayCertificate!!)
             )
 
+            val signer =
+                Signer(endpointConfig.endpointCertificate!!, endpointConfig.endpointPrivateKey!!)
             PoWebClient.initLocal(Relaynet.POWEB_PORT)
-                .deliverParcel(parcel.serialize(endpointConfig.endpointPrivateKey!!))
+                .deliverParcel(parcel.serialize(endpointConfig.endpointPrivateKey!!), signer)
 
             messageRepository.receive(EchoMessage(System.currentTimeMillis(), message))
         }
