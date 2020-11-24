@@ -79,6 +79,8 @@ class GatewayConnection
                 override fun handleMessage(msg: Message) {
                     if (msg.what != REGISTRATION_AUTHORIZATION) {
                         cont.resumeWithException(Exception("pre-register failed"))
+                        context.unbindService(serviceConnection)
+                        return
                     }
                     cont.resume(msg.data.getByteArray("auth")!!)
                     context.unbindService(serviceConnection)
