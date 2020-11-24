@@ -36,7 +36,7 @@ class NotificationBroadcastReceiver : BroadcastReceiver() {
 
             val poweb = PoWebClient.initLocal(Relaynet.POWEB_PORT)
             val nonceSigner = Signer(
-                endpointConfig.endpointCertificate!!, endpointConfig.endpointPrivateKey!!
+                endpointConfig.endpointReceiverCertificate!!, endpointConfig.endpointReceiverPrivateKey!!
             )
 
             poweb

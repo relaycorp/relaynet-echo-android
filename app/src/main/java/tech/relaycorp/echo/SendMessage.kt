@@ -20,20 +20,20 @@ class SendMessage
     private val endpointConfig: EndpointConfig
 ) {
 
-    suspend fun send(message: String) {
+    suspend fun send(message: String): Boolean =
         withContext(Dispatchers.IO) {
-            val recipientCertificate = endpointConfig.endpointCertificate!!
+            val recipientCertificate = endpointConfig.endpointReceiverCertificate!!
 
             val senderCertificate = issueParcelDeliveryAuthorization(
-                endpointConfig.endpointKeyPair.public,
-                endpointConfig.endpointKeyPair.private,
+                endpointConfig.endpointSenderKeyPair.public,
+                endpointConfig.endpointReceiverKeyPair.private,
                 recipientCertificate.expiryDate,
                 recipientCertificate,
                 recipientCertificate.startDate
             )
 
             val parcel = Parcel(
-                recipientAddress = endpointConfig.endpointAddress!!,
+                recipientAddress = endpointConfig.endpointReceiverAddress!!,
                 payload = message.toByteArray(Charset.forName("UTF-8")),
                 senderCertificate = senderCertificate,
                 messageId = UUID.randomUUID().toString(),
@@ -45,19 +45,19 @@ class SendMessage
                 )
             )
 
-            try {
+            return@withContext try {
                 PoWebClient.initLocal(Relaynet.POWEB_PORT)
                     .deliverParcel(
-                        parcel.serialize(endpointConfig.endpointPrivateKey!!),
+                        parcel.serialize(endpointConfig.endpointSenderPrivateKey!!),
                         Signer(
-                            endpointConfig.endpointCertificate!!,
-                            endpointConfig.endpointPrivateKey!!
+                            endpointConfig.endpointSenderCertificate!!,
+                            endpointConfig.endpointSenderPrivateKey!!
                         )
                     )
-                messageRepository.receive(EchoMessage(System.currentTimeMillis(), message))
+                true
             } catch (e: Exception) {
                 Log.e("SendMessage", "Error sending message", e)
+                false
             }
         }
-    }
 }

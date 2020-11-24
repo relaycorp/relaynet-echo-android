@@ -1,6 +1,5 @@
 package tech.relaycorp.echo
 
-import android.content.Context
 import android.content.SharedPreferences
 import android.util.Base64
 import org.bouncycastle.jce.provider.BouncyCastleProvider
@@ -16,30 +15,52 @@ import javax.inject.Inject
 
 class EndpointConfig
 @Inject constructor(
-    private val sharedPreferences: SharedPreferences,
-    private val context: Context
+    private val sharedPreferences: SharedPreferences
 ) {
 
-    var endpointPrivateKey: PrivateKey?
-        get() = sharedPreferences.getString("private_key", null)?.toPrivateKey()
+    var endpointSenderPrivateKey: PrivateKey?
+        get() = sharedPreferences.getString("sender_private_key", null)?.toPrivateKey()
         set(value) {
-            sharedPreferences.edit().putString("private_key", value?.toEncodedString()).apply()
+            sharedPreferences.edit().putString("sender_private_key", value?.toEncodedString())
+                .apply()
         }
 
-    var endpointKeyPair: KeyPair
-        get() = endpointPrivateKey?.toKeyPair()
-            ?: generateRSAKeyPair().also { endpointKeyPair = it }
+    var endpointSenderKeyPair: KeyPair
+        get() = endpointSenderPrivateKey?.toKeyPair()
+            ?: generateRSAKeyPair().also { endpointSenderKeyPair = it }
         set(value) {
-            endpointPrivateKey = value.private
+            endpointSenderPrivateKey = value.private
         }
 
-    var endpointCertificate
-        get() = sharedPreferences.getString("certificate", null)?.toCertificate()
+    var endpointReceiverPrivateKey: PrivateKey?
+        get() = sharedPreferences.getString("receiver_private_key", null)?.toPrivateKey()
         set(value) {
-            sharedPreferences.edit().putString("certificate", value?.toEncodedString()).apply()
+            sharedPreferences.edit().putString("receiver_private_key", value?.toEncodedString())
+                .apply()
         }
 
-    val endpointAddress get() = endpointCertificate?.subjectPrivateAddress
+    var endpointReceiverKeyPair: KeyPair
+        get() = endpointReceiverPrivateKey?.toKeyPair()
+            ?: generateRSAKeyPair().also { endpointReceiverKeyPair = it }
+        set(value) {
+            endpointReceiverPrivateKey = value.private
+        }
+
+    var endpointSenderCertificate
+        get() = sharedPreferences.getString("sender_certificate", null)?.toCertificate()
+        set(value) {
+            sharedPreferences.edit().putString("sender_certificate", value?.toEncodedString()).apply()
+        }
+
+    val endpointSenderAddress get() = endpointSenderCertificate?.subjectPrivateAddress
+
+    var endpointReceiverCertificate
+        get() = sharedPreferences.getString("receiver_certificate", null)?.toCertificate()
+        set(value) {
+            sharedPreferences.edit().putString("receiver_certificate", value?.toEncodedString()).apply()
+        }
+
+    val endpointReceiverAddress get() = endpointReceiverCertificate?.subjectPrivateAddress
 
     var gatewayCertificate
         get() = sharedPreferences.getString("gateway_certificate", null)?.toCertificate()

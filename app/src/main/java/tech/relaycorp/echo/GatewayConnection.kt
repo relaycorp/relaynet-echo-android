@@ -10,7 +10,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import tech.relaycorp.poweb.PoWebClient
+import tech.relaycorp.relaynet.messages.control.PrivateNodeRegistration
 import tech.relaycorp.relaynet.messages.control.PrivateNodeRegistrationRequest
+import java.security.KeyPair
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -28,7 +30,10 @@ class GatewayConnection
         withContext(Dispatchers.IO) {
             if (syncConnection != null) return@withContext // Already connected
 
-            if (config.endpointCertificate == null) {
+            if (
+                config.endpointSenderCertificate == null ||
+                config.endpointReceiverCertificate == null
+            ) {
                 register()
             } else {
                 bindSync()
@@ -41,7 +46,15 @@ class GatewayConnection
     }
 
     private suspend fun register() {
-        val keyPair = config.endpointKeyPair
+        val senderPNR = registerEndpoint(config.endpointSenderKeyPair)
+        val receiverPNR = registerEndpoint(config.endpointReceiverKeyPair)
+
+        config.endpointSenderCertificate = senderPNR.privateNodeCertificate
+        config.endpointReceiverCertificate = receiverPNR.privateNodeCertificate
+        config.gatewayCertificate = receiverPNR.gatewayCertificate
+    }
+
+    private suspend fun registerEndpoint(keyPair: KeyPair): PrivateNodeRegistration {
         val preAuthSerialized = preRegister()
         val request = PrivateNodeRegistrationRequest(keyPair.public, preAuthSerialized)
         val requestSerialized = request.serialize(keyPair.private)
@@ -49,9 +62,7 @@ class GatewayConnection
         bindSync()
 
         val poweb = PoWebClient.initLocal(port = Relaynet.POWEB_PORT)
-        val pnr = poweb.registerNode(requestSerialized)
-        config.endpointCertificate = pnr.privateNodeCertificate
-        config.gatewayCertificate = pnr.gatewayCertificate
+        return poweb.registerNode(requestSerialized)
     }
 
     private suspend fun preRegister(): ByteArray {

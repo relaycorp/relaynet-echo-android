@@ -37,8 +37,10 @@ class MainActivity : AppCompatActivity() {
         send.setOnClickListener {
             lifecycleScope.launch {
                 send.isEnabled = false
-                sendMessage.send(messageField.text.toString())
-                messageField.setText("")
+                val success = sendMessage.send(messageField.text.toString())
+                if (success) {
+                    messageField.setText("")
+                }
                 send.isEnabled = true
             }
         }
