@@ -39,7 +39,10 @@ class SendMessage
                 messageId = UUID.randomUUID().toString(),
                 creationDate = ZonedDateTime.now(),
                 ttl = 1.hours.toInt(TimeUnit.SECONDS),
-                senderCertificateChain = setOf(recipientCertificate)
+                senderCertificateChain = setOf(
+                    recipientCertificate,
+                    endpointConfig.gatewayCertificate!!
+                )
             )
 
             try {
