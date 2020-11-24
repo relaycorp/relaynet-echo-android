@@ -39,27 +39,28 @@ android {
 
 dependencies {
     // Java 8
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.0.10'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.1'
 
     // Kotlin
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 
     // Android
     implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation 'androidx.core:core-ktx:1.3.1'
-    implementation 'com.google.android.material:material:1.3.0-alpha02'
+    implementation 'androidx.core:core-ktx:1.3.2'
+    implementation 'com.google.android.material:material:1.3.0-alpha03'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.2.0'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.2.0'
     implementation 'androidx.security:security-crypto:1.1.0-alpha02'
 
     // Dependency Injection
-    api 'com.google.dagger:dagger:2.29'
-    kapt 'com.google.dagger:dagger-compiler:2.29'
+    api 'com.google.dagger:dagger:2.29.1'
+    kapt 'com.google.dagger:dagger-compiler:2.29.1'
 
     // Relaynet
-    implementation 'tech.relaycorp:relaynet:1.38.4'
-    implementation 'tech.relaycorp:poweb:1.5.7'
+    implementation 'tech.relaycorp:relaynet:1.39.0'
+    implementation 'tech.relaycorp:relaynet-cogrpc:1.1.2'
+    implementation 'tech.relaycorp:poweb:1.5.9'
 
     // Security
     implementation "org.bouncycastle:bcpkix-jdk15on:1.66"

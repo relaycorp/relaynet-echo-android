@@ -1,10 +1,11 @@
 package tech.relaycorp.echo
 
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import tech.relaycorp.poweb.PoWebClient
 import tech.relaycorp.relaynet.bindings.pdc.Signer
+import tech.relaycorp.relaynet.issueParcelDeliveryAuthorization
 import tech.relaycorp.relaynet.messages.Parcel
 import java.nio.charset.Charset
 import java.time.ZonedDateTime
@@ -21,22 +22,39 @@ class SendMessage
 
     suspend fun send(message: String) {
         withContext(Dispatchers.IO) {
+            val recipientCertificate = endpointConfig.endpointCertificate!!
+
+            val senderCertificate = issueParcelDeliveryAuthorization(
+                endpointConfig.endpointKeyPair.public,
+                endpointConfig.endpointKeyPair.private,
+                recipientCertificate.expiryDate,
+                recipientCertificate,
+                recipientCertificate.startDate
+            )
+
             val parcel = Parcel(
-                recipientAddress = Relaynet.RECIPIENT,
+                recipientAddress = endpointConfig.endpointAddress!!,
                 payload = message.toByteArray(Charset.forName("UTF-8")),
-                senderCertificate = endpointConfig.endpointCertificate!!,
+                senderCertificate = senderCertificate,
                 messageId = UUID.randomUUID().toString(),
                 creationDate = ZonedDateTime.now(),
                 ttl = 1.hours.toInt(TimeUnit.SECONDS),
-                senderCertificateChain = setOf(endpointConfig.gatewayCertificate!!)
+                senderCertificateChain = setOf(recipientCertificate)
             )
 
-            val signer =
-                Signer(endpointConfig.endpointCertificate!!, endpointConfig.endpointPrivateKey!!)
-            PoWebClient.initLocal(Relaynet.POWEB_PORT)
-                .deliverParcel(parcel.serialize(endpointConfig.endpointPrivateKey!!), signer)
-
-            messageRepository.receive(EchoMessage(System.currentTimeMillis(), message))
+            try {
+                PoWebClient.initLocal(Relaynet.POWEB_PORT)
+                    .deliverParcel(
+                        parcel.serialize(endpointConfig.endpointPrivateKey!!),
+                        Signer(
+                            endpointConfig.endpointCertificate!!,
+                            endpointConfig.endpointPrivateKey!!
+                        )
+                    )
+                messageRepository.receive(EchoMessage(System.currentTimeMillis(), message))
+            } catch (e: Exception) {
+                Log.e("SendMessage", "Error sending message", e)
+            }
         }
     }
 }

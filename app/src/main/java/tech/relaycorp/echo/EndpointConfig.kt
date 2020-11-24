@@ -39,6 +39,8 @@ class EndpointConfig
             sharedPreferences.edit().putString("certificate", value?.toEncodedString()).apply()
         }
 
+    val endpointAddress get() = endpointCertificate?.subjectPrivateAddress
+
     var gatewayCertificate
         get() = sharedPreferences.getString("gateway_certificate", null)?.toCertificate()
         set(value) {
