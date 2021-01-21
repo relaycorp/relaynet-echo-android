@@ -38,6 +38,8 @@ android {
 }
 
 dependencies {
+    compile project(':sdk')
+
     // Java 8
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.1'
 

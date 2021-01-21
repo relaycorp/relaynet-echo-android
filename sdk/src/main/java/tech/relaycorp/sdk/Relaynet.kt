@@ -1,4 +1,4 @@
-package tech.relaycorp.echo
+package tech.relaycorp.sdk
 
 object Relaynet {
     const val POWEB_PORT = 13276

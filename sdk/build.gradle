@@ -4,6 +4,10 @@ plugins {
     id 'kotlin-kapt'
 }
 
+repositories {
+    maven { url "https://jitpack.io" }
+}
+
 android {
     compileSdkVersion 30
     buildToolsVersion "30.0.2"

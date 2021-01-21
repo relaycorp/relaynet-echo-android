@@ -1,20 +1,30 @@
 package tech.relaycorp.sdk
 
+import android.content.Context
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flatMapConcat
+import tech.relaycorp.sdk.models.FirstPartyEndpoint
+import tech.relaycorp.sdk.models.IncomingMessage
+import tech.relaycorp.sdk.models.OutgoingMessage
 
 object RelaynetClient {
 
+    private lateinit var context: Context
+
     // We need to ensure the instance is always built inside a suspended function or a flow
     // because building the client might involve I/O operations.
-    internal var instanceBuilder: () -> Client = { Client() }
-    private val instance by lazy(instanceBuilder)
+    internal var instanceBuilder: (Context) -> Client = { Client(it) }
+    private val instance by lazy { instanceBuilder(context) }
+
+    fun setup(context: Context) {
+        this.context = context
+    }
 
     // Gateway
 
     suspend fun bind() = instance.bind()
-    suspend fun unbind() = instance.unbind()
+    fun unbind() = instance.unbind()
 
     // First-Party Endpoints
 
@@ -29,8 +39,15 @@ object RelaynetClient {
 
     // Messaging
 
-    suspend fun send(message: OutgoingMessage) = instance.send(message)
-    fun receive(): Flow<IncomingMessage> = { instance }.asFlow().flatMapConcat { it.receive() }
+    suspend fun sendMessage(message: OutgoingMessage) = instance.send(message)
+    fun receiveMessages(): Flow<IncomingMessage> =
+        { instance }.asFlow()
+            .flatMapConcat { it.receive() }
+
+    // Internal
+
+    internal suspend fun handleIncomingMessageNotification() =
+        instance.handleIncomingMessageNotification()
 
 }
 

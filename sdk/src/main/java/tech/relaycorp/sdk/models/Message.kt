@@ -1,10 +1,10 @@
-package tech.relaycorp.sdk
+package tech.relaycorp.sdk.models
 
 import java.time.ZonedDateTime
 import java.util.*
 
 abstract class Message(
-    val id: Message.Id,
+    val id: Id,
     val message: ByteArray,
     senderEndpoint: Endpoint,
     receiverEndpoint: Endpoint,
@@ -16,7 +16,7 @@ abstract class Message(
     }
 
     class Id
-    private constructor(
+    internal constructor(
         val value: String
     ) {
         companion object {
@@ -40,9 +40,10 @@ class IncomingMessage internal constructor(
     val senderEndpoint: ThirdPartyEndpoint,
     val receiverEndpoint: FirstPartyEndpoint,
     creationDate: ZonedDateTime,
-    expirationDate: ZonedDateTime
+    expiryDate: ZonedDateTime,
+    val ack: suspend () -> Unit
 ) : Message(
-    id, message, senderEndpoint, receiverEndpoint, creationDate, expirationDate
+    id, message, senderEndpoint, receiverEndpoint, creationDate, expiryDate
 )
 
 class OutgoingMessage(

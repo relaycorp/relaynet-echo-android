@@ -1,4 +1,4 @@
-package tech.relaycorp.sdk
+package tech.relaycorp.sdk.models
 
 abstract class Endpoint(val address: String) {
     override fun equals(other: Any?): Boolean {
@@ -13,6 +13,6 @@ abstract class Endpoint(val address: String) {
 
 class FirstPartyEndpoint internal constructor(address: String) : Endpoint(address)
 
-sealed class ThirdPartyEndpoint(address: String) : Endpoint(address)
+class ThirdPartyEndpoint(address: String) : Endpoint(address)
 class PrivateThirdPartyEndpoint(address: String) : Endpoint(address)
 class PublicThirdPartyEndpoint(address: String) : Endpoint(address)
