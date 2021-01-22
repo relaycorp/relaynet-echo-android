@@ -7,13 +7,11 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import tech.relaycorp.sdk.RelaynetClient
 import java.util.*
 import javax.inject.Inject
 
 class MainActivity : AppCompatActivity() {
-
-    @Inject
-    lateinit var gatewayConnection: GatewayConnection
 
     @Inject
     lateinit var messageRepository: MessageRepository
@@ -30,7 +28,11 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             send.isEnabled = false
-            gatewayConnection.connect()
+            RelaynetClient.bind()
+            if (RelaynetClient.listEndpoints().size < 2) {
+                RelaynetClient.registerEndpoint() // sender
+                RelaynetClient.registerEndpoint() // receiver
+            }
             send.isEnabled = true
         }
 
@@ -63,6 +65,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        gatewayConnection.disconnect()
+        RelaynetClient.unbind()
     }
 }

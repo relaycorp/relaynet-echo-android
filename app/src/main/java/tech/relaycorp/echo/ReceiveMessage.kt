@@ -1,10 +1,14 @@
 package tech.relaycorp.echo
 
-import android.app.*
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.annotation.RequiresApi
+import tech.relaycorp.sdk.models.IncomingMessage
 import javax.inject.Inject
 import kotlin.random.Random
 
@@ -18,9 +22,11 @@ class ReceiveMessage
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     }
 
-    suspend fun receive(message: EchoMessage) {
-        messageRepository.receive(message)
-        showNotification(message)
+    suspend fun receive(message: IncomingMessage) {
+        val echoMessage = EchoMessage.fromIncomingMessage(message)
+        messageRepository.receive(echoMessage)
+        message.ack()
+        showNotification(echoMessage)
     }
 
     private fun showNotification(message: EchoMessage) {

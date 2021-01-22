@@ -1,4 +1,4 @@
-package tech.relaycorp.echo
+package tech.relaycorp.sdk.background
 
 import android.content.ComponentName
 import android.content.Context

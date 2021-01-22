@@ -1,8 +1,8 @@
 package tech.relaycorp.echo.di
 
 import dagger.Component
+import tech.relaycorp.echo.App
 import tech.relaycorp.echo.MainActivity
-import tech.relaycorp.echo.NotificationBroadcastReceiver
 import javax.inject.Singleton
 
 @Singleton
@@ -12,6 +12,6 @@ import javax.inject.Singleton
     ]
 )
 interface AppComponent {
+    fun inject(app: App)
     fun inject(activity: MainActivity)
-    fun inject(receiver: NotificationBroadcastReceiver)
 }
