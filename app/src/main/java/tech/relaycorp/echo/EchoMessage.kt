@@ -1,7 +1,6 @@
 package tech.relaycorp.echo
 
-import tech.relaycorp.relaynet.messages.Parcel
-import tech.relaycorp.sdk.models.IncomingMessage
+import tech.relaycorp.sdk.IncomingMessage
 import java.nio.charset.Charset
 
 

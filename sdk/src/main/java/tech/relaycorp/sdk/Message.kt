@@ -1,10 +1,10 @@
-package tech.relaycorp.sdk.models
+package tech.relaycorp.sdk
 
 import java.time.ZonedDateTime
 import java.util.*
 
 abstract class Message(
-    val id: Id,
+    val id: MessageId,
     val message: ByteArray,
     senderEndpoint: Endpoint,
     receiverEndpoint: Endpoint,
@@ -14,28 +14,10 @@ abstract class Message(
     companion object {
         internal fun maxExpirationDate() = ZonedDateTime.now().plusDays(30)
     }
-
-    class Id
-    internal constructor(
-        val value: String
-    ) {
-        companion object {
-            fun generate() = Id(UUID.randomUUID().toString())
-        }
-
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (other !is Id) return false
-            if (value != other.value) return false
-            return true
-        }
-
-        override fun hashCode() = value.hashCode()
-    }
 }
 
 class IncomingMessage internal constructor(
-    id: Id,
+    id: MessageId,
     message: ByteArray,
     val senderEndpoint: ThirdPartyEndpoint,
     val receiverEndpoint: FirstPartyEndpoint,
@@ -52,7 +34,25 @@ class OutgoingMessage(
     val receiverEndpoint: ThirdPartyEndpoint,
     creationDate: ZonedDateTime = ZonedDateTime.now(),
     expirationDate: ZonedDateTime = maxExpirationDate(),
-    id: Id = Id.generate()
+    id: MessageId = MessageId.generate()
 ) : Message(
     id, message, senderEndpoint, receiverEndpoint, creationDate, expirationDate
 )
+
+class MessageId
+internal constructor(
+    val value: String
+) {
+    companion object {
+        fun generate() = MessageId(UUID.randomUUID().toString())
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is MessageId) return false
+        if (value != other.value) return false
+        return true
+    }
+
+    override fun hashCode() = value.hashCode()
+}

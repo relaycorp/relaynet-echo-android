@@ -19,22 +19,17 @@ import tech.relaycorp.relaynet.bindings.pdc.StreamingMode
 import tech.relaycorp.relaynet.issueParcelDeliveryAuthorization
 import tech.relaycorp.relaynet.messages.Parcel
 import tech.relaycorp.relaynet.messages.control.PrivateNodeRegistrationRequest
-import tech.relaycorp.relaynet.wrappers.generateRSAKeyPair
 import tech.relaycorp.relaynet.wrappers.x509.Certificate
 import tech.relaycorp.sdk.background.suspendBindService
-import tech.relaycorp.sdk.models.*
+import java.security.KeyPair
 import java.time.Duration
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
-internal class Client(
+class GatewayClientImpl(
     private val context: Context
 ) {
-
-    private val storage: Storage =
-        Storage(context.getSharedPreferences("echo", Context.MODE_PRIVATE))
-
 
     // Gateway
 
@@ -60,8 +55,7 @@ internal class Client(
 
     // First-Party Endpoints
 
-    suspend fun registerEndpoint(): FirstPartyEndpoint {
-        val keyPair = generateRSAKeyPair()
+    suspend fun registerEndpoint(keyPair: KeyPair): Pair<Certificate, Certificate> {
         val preAuthSerialized = preRegister()
         val request = PrivateNodeRegistrationRequest(keyPair.public, preAuthSerialized)
         val requestSerialized = request.serialize(keyPair.private)
@@ -70,12 +64,10 @@ internal class Client(
 
         val poweb = PoWebClient.initLocal(port = Relaynet.POWEB_PORT)
         val pnr = poweb.registerNode(requestSerialized)
-
-        val endpoint = pnr.privateNodeCertificate.subjectPrivateAddress
-        storage.setKeyPair(endpoint, keyPair)
-        storage.setCertificate(endpoint, pnr.privateNodeCertificate)
-        storage.setGatewayCertificate(pnr.gatewayCertificate)
-        return FirstPartyEndpoint(endpoint)
+        return Pair(
+            pnr.privateNodeCertificate,
+            pnr.gatewayCertificate
+        )
     }
 
     private suspend fun preRegister(): ByteArray {
@@ -103,28 +95,13 @@ internal class Client(
         }
     }
 
-
-    suspend fun removeEndpoint(endpoint: FirstPartyEndpoint) {
-        storage.setKeyPair(endpoint.address, null)
-        storage.setCertificate(endpoint.address, null)
-    }
-
-    suspend fun listEndpoints(): List<FirstPartyEndpoint> =
-        storage.listEndpoints().map { FirstPartyEndpoint(it) }
-
-    // Third-Party Endpoints
-
-    suspend fun issueAuthorization() = Unit
-    suspend fun exportPublicKey(): ByteArray = ByteArray(0)
-
     // Messaging
 
-    suspend fun send(message: OutgoingMessage) {
-
+    suspend fun sendMessage(message: OutgoingMessage) {
         withContext(Dispatchers.IO) {
             val senderCertificate = getParcelDeliveryAuthorization(
                 message.senderEndpoint,
-                FirstPartyEndpoint(message.receiverEndpoint.address)
+                FirstPartyEndpoint.load(message.receiverEndpoint.address)!!
             )
 
             val parcel = Parcel(
@@ -138,12 +115,12 @@ internal class Client(
                     message.expirationDate
                 ).seconds.toInt(),
                 senderCertificateChain = setOf(
-                    storage.getCertificate(message.receiverEndpoint.address)!!,
-                    storage.getGatewayCertificate()!!
+                    Storage.getCertificate(message.receiverEndpoint.address)!!,
+                    Storage.getGatewayCertificate()!!
                 )
             )
 
-            val senderPrivateKey = storage.getKeyPair(message.senderEndpoint.address)!!.private
+            val senderPrivateKey = Storage.getKeyPair(message.senderEndpoint.address)!!.private
             return@withContext try {
                 PoWebClient.initLocal(Relaynet.POWEB_PORT)
                     .deliverParcel(
@@ -163,7 +140,7 @@ internal class Client(
     }
 
     private val incomingMessageChannel = BroadcastChannel<IncomingMessage>(1)
-    fun receive(): Flow<IncomingMessage> = incomingMessageChannel.asFlow()
+    fun receiveMessages(): Flow<IncomingMessage> = incomingMessageChannel.asFlow()
 
     // Internal
 
@@ -173,12 +150,12 @@ internal class Client(
 
         val poweb = PoWebClient.initLocal(Relaynet.POWEB_PORT)
 
-        val nonceSigners = storage
+        val nonceSigners = Storage
             .listEndpoints()
             .map { endpoint ->
                 Signer(
-                    storage.getCertificate(endpoint)!!,
-                    storage.getKeyPair(endpoint)!!.private
+                    Storage.getCertificate(endpoint)!!,
+                    Storage.getKeyPair(endpoint)!!.private
                 )
             }
             .toTypedArray()
@@ -191,10 +168,10 @@ internal class Client(
 
                 incomingMessageChannel.send(
                     IncomingMessage(
-                        id = Message.Id(parcel.id),
+                        id = MessageId(parcel.id),
                         message = parcel.payload,
-                        senderEndpoint = ThirdPartyEndpoint(parcel.senderCertificate.subjectPrivateAddress),
-                        receiverEndpoint = FirstPartyEndpoint(parcel.recipientAddress),
+                        senderEndpoint = PrivateThirdPartyEndpoint(parcel.senderCertificate.subjectPrivateAddress),
+                        receiverEndpoint = FirstPartyEndpoint.load(parcel.recipientAddress)!!,
                         creationDate = parcel.creationDate,
                         expiryDate = parcel.expiryDate,
                         ack = { parcelCollection.ack() }
@@ -208,14 +185,14 @@ internal class Client(
     }
 
     // This only works because both endpoints are FirstPartyEndpoint
-    private fun getParcelDeliveryAuthorization(
+    private suspend fun getParcelDeliveryAuthorization(
         senderEndpoint: FirstPartyEndpoint,
         receiverEndpoint: FirstPartyEndpoint
     ): Certificate {
 
-        val senderKeyPair = storage.getKeyPair(senderEndpoint.address)!!
-        val receiverKeyPair = storage.getKeyPair(receiverEndpoint.address)!!
-        val receiverCertificate = storage.getCertificate(receiverEndpoint.address)!!
+        val senderKeyPair = Storage.getKeyPair(senderEndpoint.address)!!
+        val receiverKeyPair = Storage.getKeyPair(receiverEndpoint.address)!!
+        val receiverCertificate = Storage.getCertificate(receiverEndpoint.address)!!
 
 
         return issueParcelDeliveryAuthorization(

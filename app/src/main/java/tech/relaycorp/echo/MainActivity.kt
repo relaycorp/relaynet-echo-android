@@ -1,5 +1,7 @@
 package tech.relaycorp.echo
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -7,7 +9,8 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import tech.relaycorp.sdk.RelaynetClient
+import tech.relaycorp.sdk.FirstPartyEndpoint
+import tech.relaycorp.sdk.GatewayClient
 import java.util.*
 import javax.inject.Inject
 
@@ -19,6 +22,9 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var sendMessage: SendMessage
 
+    @Inject
+    lateinit var sharedPreferences: SharedPreferences
+
     private val component by lazy { (applicationContext as App).component }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,10 +34,13 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             send.isEnabled = false
-            RelaynetClient.bind()
-            if (RelaynetClient.listEndpoints().size < 2) {
-                RelaynetClient.registerEndpoint() // sender
-                RelaynetClient.registerEndpoint() // receiver
+            GatewayClient.bind()
+            if (!sharedPreferences.getBoolean("setup", false)) {
+                val editor = sharedPreferences.edit()
+                editor.putString("sender", FirstPartyEndpoint.register().address)
+                editor.putString("receiver", FirstPartyEndpoint.register().address)
+                editor.putBoolean("setup", true)
+                editor.apply()
             }
             send.isEnabled = true
         }
@@ -65,6 +74,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        RelaynetClient.unbind()
+        GatewayClient.unbind()
     }
 }

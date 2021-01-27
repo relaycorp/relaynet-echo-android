@@ -8,7 +8,8 @@ import kotlinx.coroutines.launch
 import tech.relaycorp.echo.di.AppComponent
 import tech.relaycorp.echo.di.AppModule
 import tech.relaycorp.echo.di.DaggerAppComponent
-import tech.relaycorp.sdk.RelaynetClient
+import tech.relaycorp.sdk.GatewayClient
+import tech.relaycorp.sdk.Relaynet
 import javax.inject.Inject
 
 class App : Application() {
@@ -25,11 +26,10 @@ class App : Application() {
         super.onCreate()
         component.inject(this)
 
-        RelaynetClient.setup(this)
-
         CoroutineScope(Dispatchers.IO).launch {
-            RelaynetClient.receiveMessages()
-                .collect(receiveMessage::receive)
+            Relaynet.setup(this@App)
+            GatewayClient.receiveMessages()
+                .collect { receiveMessage.receive(it) }
         }
     }
 }

@@ -8,7 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.annotation.RequiresApi
-import tech.relaycorp.sdk.models.IncomingMessage
+import tech.relaycorp.sdk.IncomingMessage
 import javax.inject.Inject
 import kotlin.random.Random
 
