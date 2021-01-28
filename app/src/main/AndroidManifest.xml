@@ -24,13 +24,5 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <receiver
-            android:name=".NotificationBroadcastReceiver"
-            tools:ignore="ExportedReceiver">
-            <intent-filter>
-                <action android:name="tech.relaycorp.endpoint.NOTIFY" />
-            </intent-filter>
-        </receiver>
     </application>
 </manifest>

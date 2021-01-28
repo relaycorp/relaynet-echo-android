@@ -1,6 +1,6 @@
 package tech.relaycorp.echo
 
-import tech.relaycorp.relaynet.messages.Parcel
+import tech.relaycorp.sdk.IncomingMessage
 import java.nio.charset.Charset
 
 
@@ -9,9 +9,9 @@ data class EchoMessage(
     val message: String
 ) {
     companion object {
-        fun fromParcel(parcel: Parcel) = EchoMessage(
-            parcel.creationDate.toInstant().toEpochMilli(),
-            parcel.payload.toString(Charset.forName("UTF-8"))
+        fun fromIncomingMessage(message: IncomingMessage) = EchoMessage(
+            message.creationDate.toInstant().toEpochMilli(),
+            message.message.toString(Charset.forName("UTF-8"))
         )
     }
 }
